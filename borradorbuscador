@@ -1,0 +1,51 @@
+# from flask import Flask, request, render_template
+import mysql.connector
+
+app = Flask(__Paqueteplanner__)
+
+# Configuración de la conexión a la base de datos
+db = mysql.connector.connect(
+    host="localhost",
+    user="tu_usuario",
+    password="tu_contraseña",
+    database="viajes"
+)
+
+# Ruta para la página de inicio
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+# Ruta para la búsqueda de paquetes
+@app.route('/buscar', methods=['GET', 'POST'])
+def buscar_paquetes():
+    if request.method == 'POST':
+        # Usuario ingresa los parámetros de búsqueda del formulario
+        edad = request.form['edad']
+        fecha = request.form['fecha']
+        mes = request.form['mes']
+        año = request.form['año']
+        presupuesto = request.form['presupuesto']
+
+        # Construir la consulta SQL basada en los parámetros de búsqueda
+        query = "SELECT * FROM paquetes WHERE edad_minima <= %s AND fecha = %s AND mes = %s AND año = %s AND presupuesto <= %s"
+        params = (edad, fecha, mes, año, presupuesto)
+
+        # Ejecutar la consulta SQL
+        cursor = db.cursor()
+        cursor.execute(query, params)
+
+        # Obtener los resultados de la consulta
+        resultados = cursor.fetchall()
+
+        # Cerrar el cursor
+        cursor.close()
+
+        # Pasar los resultados a la plantilla HTML para mostrarlos en el frontend
+        return render_template('resultados.html', resultados=resultados)
+
+    # Si no se envió el formulario, mostrar la página de búsqueda
+    return render_template('buscar.html')
+
+if __name__ == '__main__':
+    app.run()
