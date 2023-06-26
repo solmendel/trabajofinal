@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Buscador de Paquetes de Viajes by Argenplanner</title>
+</head>
+<body>
+    <h1>Bienvenido al Buscador de Paquetes de Viajes "Paquete Planeer"</h1>
+    <a href="/buscar">Buscar paquetes de viajes</a>
+</body>
+</html>
