@@ -1,7 +1,7 @@
-# from flask import Flask, request, render_template
+from flask import Flask, request, jsonify
 import mysql.connector
 
-app = Flask(__Paqueteplanner__)
+app = Flask(__Paquete Planner by Argenplanner__)
 
 # Configuración de la conexión a la base de datos
 db = mysql.connector.connect(
@@ -11,41 +11,59 @@ db = mysql.connector.connect(
     database="viajes"
 )
 
-# Ruta para la página de inicio
-@app.route('/')
-def index():
-    return render_template('index.html')
+# Ruta para obtener todos los paquetes de viajes
+@app.route('/paquetes', methods=['GET'])
+def obtener_paquetes():
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM paquetes")
+    paquetes = cursor.fetchall()
+    cursor.close()
+    return jsonify(paquetes)
 
-# Ruta para la búsqueda de paquetes
-@app.route('/buscar', methods=['GET', 'POST'])
-def buscar_paquetes():
-    if request.method == 'POST':
-        # Usuario ingresa los parámetros de búsqueda del formulario
-        edad = request.form['edad']
-        fecha = request.form['fecha']
-        mes = request.form['mes']
-        año = request.form['año']
-        presupuesto = request.form['presupuesto']
+# Ruta para obtener un paquete de viaje específico
+@app.route('/paquetes/<int:paquete_id>', methods=['GET'])
+def obtener_paquete(paquete_id):
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM paquetes WHERE id = %s", (paquete_id,))
+    paquete = cursor.fetchone()
+    cursor.close()
+    if paquete:
+        return jsonify(paquete)
+    else:
+        return jsonify({'error': 'Paquete no encontrado'}), 404
 
-        # Construir la consulta SQL basada en los parámetros de búsqueda
-        query = "SELECT * FROM paquetes WHERE edad_minima <= %s AND fecha = %s AND mes = %s AND año = %s AND presupuesto <= %s"
-        params = (edad, fecha, mes, año, presupuesto)
+# Ruta para crear un nuevo paquete de viaje
+@app.route('/paquetes', methods=['POST'])
+def crear_paquete():
+    nuevo_paquete = request.get_json()
+    cursor = db.cursor()
+    cursor.execute("INSERT INTO paquetes (destino, edad_minima, fecha, mes, año, presupuesto) VALUES (%s, %s, %s, %s, %s, %s)",
+                   (nuevo_paquete['destino'], nuevo_paquete['edad_minima'], nuevo_paquete['fecha'], nuevo_paquete['mes'], nuevo_paquete['año'], nuevo_paquete['presupuesto']))
+    db.commit()
+    nuevo_paquete_id = cursor.lastrowid
+    cursor.close()
+    return jsonify({'id': nuevo_paquete_id, 'message': 'Paquete creado correctamente'}), 201
 
-        # Ejecutar la consulta SQL
-        cursor = db.cursor()
-        cursor.execute(query, params)
+# Ruta para actualizar un paquete de viaje existente
+@app.route('/paquetes/<int:paquete_id>', methods=['PUT'])
+def actualizar_paquete(paquete_id):
+    paquete_actualizado = request.get_json()
+    cursor = db.cursor()
+    cursor.execute("UPDATE paquetes SET destino = %s, edad_minima = %s, fecha = %s, mes = %s, año = %s, presupuesto = %s WHERE id = %s",
+                   (paquete_actualizado['destino'], paquete_actualizado['edad_minima'], paquete_actualizado['fecha'], paquete_actualizado['mes'], paquete_actualizado['año'], paquete_actualizado['presupuesto'], paquete_id))
+    db.commit()
+    cursor.close()
+    return jsonify({'message': 'Paquete actualizado correctamente'})
 
-        # Obtener los resultados de la consulta
-        resultados = cursor.fetchall()
-
-        # Cerrar el cursor
-        cursor.close()
-
-        # Pasar los resultados a la plantilla HTML para mostrarlos en el frontend
-        return render_template('resultados.html', resultados=resultados)
-
-    # Si no se envió el formulario, mostrar la página de búsqueda
-    return render_template('buscar.html')
+# Ruta para eliminar un paquete de viaje
+@app.route('/paquetes/<int:paquete_id>', methods=['DELETE'])
+def eliminar_paquete(paquete_id):
+    cursor = db.cursor()
+    cursor.execute("DELETE FROM paquetes WHERE id = %s", (paquete_id,))
+    db.commit()
+    cursor.close()
+    return jsonify({'message': 'Paquete eliminado correctamente'})
 
 if __name__ == '__main__':
     app.run()
+
