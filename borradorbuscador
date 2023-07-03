@@ -1,7 +1,7 @@
-#from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify
 import mysql.connector
 
-app = Flask(__Paquete Planner by Argenplanner__)
+app = Flask(__name__)
 
 # Configuración de la conexión a la base de datos
 db = mysql.connector.connect(
@@ -66,4 +66,3 @@ def eliminar_paquete(paquete_id):
 
 if __name__ == '__main__':
     app.run()
-
